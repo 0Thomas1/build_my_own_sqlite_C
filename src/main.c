@@ -191,7 +191,6 @@ PrepareResult prepare_statement(InputBuffer* input_buffer, Statement* statement)
 ExecuteResult execute_statement(Statement* statement,Table* table){
     switch (statement->type) {
         case (STATEMENT_INSERT):
-            printf("exe_insert");
             return execute_insert(statement,table);
 
         case (STATEMENT_SELECT):
