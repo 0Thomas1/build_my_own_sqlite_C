@@ -60,9 +60,9 @@ void serialize_row (Row * src, void* dest){
 }
 
 void deserialize_row (void* src, Row* dest){
-    memcpy(&(dest->id), &src + ID_OFFSET, ID_SIZE);
-    memcpy(&(dest->username), &src + USERNAME_OFFSET, USERNAME_SIZE);
-    memcpy(&(dest->email), &src + EMAIL_OFFSET, EMAIL_SIZE);
+    memcpy(&(dest->id), src + ID_OFFSET, ID_SIZE);
+    memcpy(&(dest->username), src + USERNAME_OFFSET, USERNAME_SIZE);
+    memcpy(&(dest->email), src + EMAIL_OFFSET, EMAIL_SIZE);
 }
 
 //Table
