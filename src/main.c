@@ -98,12 +98,14 @@ ExecuteResult execute_insert(Statement* statement, Table* table){
     serialize_row(row_to_insert,row_slot(table,table->num_rows++));
     return EXECUTE_SUCCESS;
 }
-
+void print_row(Row* row){
+    printf("(%d, %s, %s)\n",row->id,row->username,row->email);
+}
 ExecuteResult execute_select(Table* table){
     Row row;
     for(uint32_t i = 0; i < table->num_rows;i++){
-        deserialize_row(table->pages[i],&row);
-        printf(&row);
+        deserialize_row(row_slot(table,i),&row);
+        print_row(&row);
     }
     return EXECUTE_SUCCESS;
 }
