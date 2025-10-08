@@ -54,9 +54,9 @@ const uint32_t ROW_SIZE = ID_SIZE + USERNAME_SIZE + EMAIL_SIZE;
 
 //Row functions
 void serialize_row (Row * src, void* dest){
-    memcpy(&dest+ ID_OFFSET,&(src->id),ID_SIZE);
-    memcpy(&dest + USERNAME_OFFSET, &(src->username),USERNAME_SIZE);
-    memcpy(&dest + EMAIL_OFFSET, &(src->email),EMAIL_SIZE);
+    memcpy(dest + ID_OFFSET,&(src->id),ID_SIZE);
+    memcpy(dest + USERNAME_OFFSET, &(src->username),USERNAME_SIZE);
+    memcpy(dest + EMAIL_OFFSET, &(src->email),EMAIL_SIZE);
 }
 
 void deserialize_row (void* src, Row* dest){
@@ -138,10 +138,26 @@ void close_input_buffer(InputBuffer* input_buffer){
     free(input_buffer);
 }
 
+Table* newTable(){
+    Table* table = (Table*)malloc(sizeof(Table));
+    for(u_int32_t i = 0; i < TABLE_MAX_PAGES; i++){
+        table->pages[i] = NULL;
+    }
+    return table;
+}
+
+void freeTable(Table* table){
+    for(u_int32_t i = 0; i < TABLE_MAX_PAGES; i++){
+        free(table->pages[i]);
+    }
+    free (table);
+}
+
 //meta commands implementation
-MetaCommandResult do_meta_command(InputBuffer* input_buffer){
+MetaCommandResult do_meta_command(InputBuffer* input_buffer,Table* table){
     if(strcmp(input_buffer->buffer,".exit") == 0){
         close_input_buffer(input_buffer);
+        freeTable(table);
         exit(EXIT_SUCCESS);
     }
     else{
@@ -158,13 +174,13 @@ PrepareResult prepare_statement(InputBuffer* input_buffer, Statement* statement)
             statement->row_to_insert.username,
             statement->row_to_insert.email
         );
-        if(args_assigned > 3){
+        if(args_assigned != 3){
             return PREPARE_SYNTAX_ERROR;
         }
         return PREPARE_SUCCESS;
     }
     if(strcmp(input_buffer->buffer, "select") == 0){
-        statement->type = STATEMENT_INSERT;
+        statement->type = STATEMENT_SELECT;
         return PREPARE_SUCCESS;
     }
 
@@ -175,28 +191,18 @@ PrepareResult prepare_statement(InputBuffer* input_buffer, Statement* statement)
 ExecuteResult execute_statement(Statement* statement,Table* table){
     switch (statement->type) {
         case (STATEMENT_INSERT):
+            printf("exe_insert");
             return execute_insert(statement,table);
 
         case (STATEMENT_SELECT):
             return execute_select(table);
-
-    }
+        default:
+            printf("DLLM\n");
+            return EXECUTE_SUCCESS;
+    }  
 }
 
-Table* newTable(){
-    Table* table = (Table*)malloc(sizeof(Table));
-    for(u_int32_t i = 0; i < PAGE_SIZE; i++){
-        table->pages[i] = NULL;
-    }
-    return table;
-}
 
-void freeTable(Table* table){
-    for(u_int32_t i = 0; i < PAGE_SIZE; i++){
-        free(table->pages[i]);
-    }
-    free (table);
-}
 int main (int argc, char* args[]){
     InputBuffer* input_buffer = new_input_buffer();
     Table* table = newTable();
@@ -205,7 +211,7 @@ int main (int argc, char* args[]){
         read_input(input_buffer);
 
        if(input_buffer->buffer[0] == '.'){
-            switch(do_meta_command(input_buffer)){
+            switch(do_meta_command(input_buffer,table)){
                 case (META_COMMAND_SUCCESS):
                     continue;
                 case (META_COMMAND_UNRECOGNIZED_COMMAND):
